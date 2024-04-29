@@ -1,0 +1,134 @@
+#include <iostream>
+#include <list>
+#include <queue>
+#include <omp.h> // Include OpenMP header
+#include <chrono>
+
+using namespace std;
+using namespace chrono;
+
+class Graph 
+{
+    int V;
+    list<int>* adj;
+
+public:
+    Graph(int V);
+    void addEdge(int v, int w);
+    void printAdjList();
+    void BFS(int s);
+    void DFSUtil(int v, bool visited[]);
+    void DFS(int v);
+};
+
+Graph::Graph(int V) 
+{
+    this->V = V;
+    adj = new list<int>[V];
+}
+
+void Graph::addEdge(int v, int w) 
+{
+    adj[v].push_back(w);
+    adj[w].push_back(v);
+}
+
+void Graph::printAdjList() 
+{
+    for (int v = 0; v < V; v++) 
+    {
+        cout << v << ": ";
+        for (int w : adj[v]) 
+        {
+            cout << w << " ";
+        }
+        cout << endl;
+    }
+}
+
+void Graph::BFS(int s) 
+{
+    bool* visited = new bool[V];
+    for (int i = 0; i < V; i++)
+        visited[i] = false;
+
+    list<int> queue;
+    visited[s] = true;
+    queue.push_back(s);
+
+    while (!queue.empty()) {
+        #pragma omp parallel for // Parallelize exploration of adjacent nodes
+        for (int i = 0; i < queue.size(); i++) 
+        {
+            int current = queue.front();
+            cout << current << " ";
+            queue.pop_front();
+            for (int v : adj[current]) 
+            {
+                if (!visited[v]) 
+                {
+                    visited[v] = true;
+                    queue.push_back(v);
+                }
+            }
+        }
+    }
+}
+
+
+void Graph::DFSUtil(int v, bool visited[]) 
+{
+    visited[v] = true;
+    cout << v << " ";
+
+    #pragma omp parallel for // Parallelize exploration of adjacent nodes
+    for (int node : adj[v]) 
+    {
+        if (!visited[node])
+            DFSUtil(node, visited);
+    }
+}
+
+void Graph::DFS(int s) 
+{
+    bool* visited = new bool[V];
+    for (int i = 0; i < V; i++) 
+    {
+        visited[i] = false;
+    }
+
+    DFSUtil(s, visited);
+}
+
+int main() 
+{
+    high_resolution_clock::time_point startTime, endTime;
+    duration<double> time_span;
+    Graph g(6);
+    g.addEdge(0, 1);
+    g.addEdge(0, 3);
+    g.addEdge(1, 2);
+    g.addEdge(2, 3);
+    g.addEdge(3, 4);
+    g.addEdge(4, 5);
+    cout << "ADJACENCY LISTS:-" << endl;
+    g.printAdjList();
+    cout << "\nBFS TRAVERSAL: ";
+    startTime = high_resolution_clock::now();
+    g.BFS(0);
+    endTime = high_resolution_clock::now();
+    time_span = duration_cast
+       <duration<double>>(endTime - startTime);
+    cout << "\nParallel BFS Time: " << time_span.count() << " seconds" << endl;
+
+    cout << endl;
+    cout << "\nDFS TRAVERSAL: ";
+    startTime = high_resolution_clock::now();
+    g.DFS(0);
+    endTime = high_resolution_clock::now();
+    time_span = duration_cast
+       <duration<double>>(endTime - startTime);
+    cout << "\nParallel DFS Time: " << time_span.count() << " seconds" << endl;
+
+    return 0;
+}

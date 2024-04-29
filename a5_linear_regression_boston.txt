@@ -1,0 +1,55 @@
+import pandas as pd
+import numpy as np
+df = pd.read_csv("housing.csv")
+df.head()
+
+df.isnull().sum()
+
+df.shape
+
+df = df.rename(columns={'medv':'price'})
+
+df.dtypes
+
+X = df.drop('price', axis=1)
+Y = df['price']
+
+X.head()
+
+Y.head()
+
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X,Y, test_size=0.2, random_state=73)
+
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+scaler.fit(X_train)
+X_train_scaled = scaler.transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+model = Sequential()
+model.add(Dense(128, input_shape=(13,), activation='relu', name='dense_1'))
+model.add(Dense(64, activation='relu', name='dense_2'))
+model.add(Dense(1, activation='linear', name='dense_output'))
+model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mae'])
+model.summary()
+
+model.fit(X_train_scaled, y_train, validation_split=0.2, epochs=100)
+
+predictions = model.predict(X_test_scaled[:5])
+print('Predicted values are:\n', predictions)
+print('Real values are:\n',y_test[:5])
+
+mse, mae = model.evaluate(X_test_scaled, y_test)
+print('Mean Squared Error from Neural Network is: ', mse, '\nMean Absolute Error from Neural Network is: ', mae)
+
+from matplotlib import pyplot as plt
+y_pred = model.predict(X_test_scaled)
+plt.scatter(y_test,y_pred)
+plt.xlabel('Actual Price')
+plt.ylabel('Predicted Price')
+plt.title('Predicted vs Actual Prices')
+plt.grid(True)
+plt.show()

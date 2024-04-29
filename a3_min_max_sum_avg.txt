@@ -1,0 +1,93 @@
+#include <iostream>
+#include <omp.h>
+#include <chrono>
+
+using namespace std;
+using namespace chrono;
+
+int minOp(int arr[], int n)
+{
+    int minv = arr[0];
+    #pragma omp parallel for reduction(min : minv)
+    for(int i=0; i<n; i++)
+    {
+        if(arr[i]<minv)
+            minv = arr[i];
+    }
+    return minv;
+}
+
+int maxOp(int arr[], int n)
+{
+    int maxv = arr[0];
+    #pragma omp parallel for reduction(max : maxv)
+    for(int i=0; i<n; i++)
+    {
+        if(arr[i]>maxv)
+            maxv = arr[i];
+    }
+    return maxv;
+}
+
+double sumOp(int arr[], int n)
+{
+    double sumv = 0.0;
+    #pragma omp parallel for reduction(+ : sumv)
+    for(int i=0; i<n; i++)
+        sumv+=arr[i];
+
+    return sumv;
+}
+
+int main()
+{
+    int n;
+    cout<<"Enter no. of elements in array: ";
+    cin>>n;
+
+    int *a = new int(n);
+
+    for(int i=0; i<n; i++)
+    {
+        cout<<"ENTER ELEMENT "<<i+1<<": ";
+        cin>>a[i];
+    }
+    cout<<endl; 
+    
+    high_resolution_clock :: time_point start_time, end_time;
+    duration<double> time_span;
+
+    start_time = high_resolution_clock::now();
+    int minval = minOp(a,n);
+    end_time = high_resolution_clock :: now();
+    time_span = duration_cast
+        <duration<double>>(end_time-start_time);
+    cout<<"Minimum value: "<<minval<<endl;
+    cout<<"Time for parallel Minimum operation: "<<time_span.count()<<" seconds\n"<<endl;
+    
+    start_time = high_resolution_clock::now();
+    int maxval = maxOp(a,n);
+    end_time = high_resolution_clock::now();
+    time_span = duration_cast   
+        <duration<double>>(end_time - start_time);
+    cout<<"Maximum value: "<<maxval<<endl;
+    cout<<"Time for parallel Maximum operation: "<<time_span.count()<<" seconds\n"<<endl;
+
+    start_time = high_resolution_clock::now();
+    double sumval = sumOp(a,n);
+    end_time = high_resolution_clock::now();
+    time_span = duration_cast   
+        <duration<double>>(end_time - start_time);
+    cout<<"Sum value: "<<sumval<<endl;
+    cout<<"Time for Sum operation: "<<time_span.count()<<" seconds\n"<<endl;
+
+    start_time = high_resolution_clock::now();
+    double avgval = sumOp(a,n)/n;
+    end_time = high_resolution_clock::now();
+    time_span = duration_cast   
+        <duration<double>>(end_time - start_time);
+    cout<<"Average value: "<<avgval<<endl;
+    cout<<"Time for parallel Average operation: "<<time_span.count()<<" seconds\n"<<endl;
+    
+    return 0;
+}
